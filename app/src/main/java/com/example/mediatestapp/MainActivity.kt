@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mediatestapp.adapter.IAdapterListener
 import com.example.mediatestapp.adapter.MediaListAdapter
@@ -42,7 +43,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         super.onCreate(savedInstanceState)
         rootView = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        initialize()
+        initUI()
         loadData()
     }
 
@@ -56,7 +57,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         volumeAdapter.updateDataChanged(volumeList.toMutableList())
     }
 
-    private fun initialize() {
+    private fun initUI() {
 
         applicationContext.contentResolver.registerContentObserver(
             MediaStore.AUTHORITY_URI,
@@ -68,12 +69,14 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         volumeAdapter = MediaVolumeAdapter(this@MainActivity, mutableListOf())
         rootView.rvVolume.apply {
             layoutManager = LinearLayoutManager(context)
+            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
             adapter = volumeAdapter
         }
 
         mediaListAdapter = MediaListAdapter(mutableListOf())
         rootView.rvMediaList.apply {
             layoutManager = LinearLayoutManager(context)
+            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
             adapter = mediaListAdapter
         }
     }
@@ -82,6 +85,28 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         rootView.tvMain.text = data
         volumeName = data
         checkReadExternalPermission()
+    }
+
+    private fun queryVideo() {
+        volumeName?.let { volumeName ->
+            val volumeAudioUri: Uri = MediaStore.Video.Media.getContentUri(volumeName)
+            val projection = arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.TITLE)
+
+            val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, null, null)
+
+            val audioList = mutableListOf<String>()
+            cursor?.use {
+                rootView.tvInfo.text = cursor.count.toString()
+                if (cursor.count <= 0) return
+                it.moveToFirst()
+                do {
+                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE))
+                    audioList.add(title)
+                } while (it.moveToNext())
+            }
+            mediaListAdapter.updateDataChanged(audioList)
+        }
     }
 
     private fun queryAudio() {
@@ -111,7 +136,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     this,
-                    Manifest.permission.READ_MEDIA_AUDIO
+                    Manifest.permission.READ_MEDIA_AUDIO,
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 queryAudio()
@@ -136,13 +161,17 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(android.Manifest.permission.READ_MEDIA_AUDIO),
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_IMAGES
+                ),
                 READ_EXTERNAL_PERMISSION_CODE
             )
         } else {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
                 READ_EXTERNAL_PERMISSION_CODE
             )
         }
