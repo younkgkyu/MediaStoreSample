@@ -105,6 +105,9 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
             data is MediaQueryType -> {
                 rootView.tvMain.text = "${volumeName ?: ""}:${data.type}"
                 queryType = data
+                volumeName?.let {
+                    checkReadExternalPermission()
+                }
             }
         }
     }
