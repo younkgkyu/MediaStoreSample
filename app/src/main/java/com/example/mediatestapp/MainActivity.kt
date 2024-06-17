@@ -18,8 +18,10 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mediatestapp.adapter.IAdapterListener
 import com.example.mediatestapp.adapter.MediaListAdapter
+import com.example.mediatestapp.adapter.MediaQueryAdapter
 import com.example.mediatestapp.adapter.MediaVolumeAdapter
 import com.example.mediatestapp.databinding.ActivityMainBinding
+import java.util.Objects
 
 
 class MainActivity : AppCompatActivity(), IAdapterListener {
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
     private lateinit var rootView: ActivityMainBinding
     private lateinit var volumeAdapter: MediaVolumeAdapter
     private lateinit var mediaListAdapter: MediaListAdapter
+    private lateinit var mediaQueryAdapter: MediaQueryAdapter
     private val mediaContentObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
         override fun onChange(selfChange: Boolean, uri: Uri?) {
             super.onChange(selfChange, uri)
@@ -34,6 +37,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         }
     }
     private var volumeName: String? = null
+    private var queryType = MediaQueryType.AUDIO
 
     companion object {
         private const val READ_EXTERNAL_PERMISSION_CODE = 1000;
@@ -79,12 +83,51 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
             adapter = mediaListAdapter
         }
+
+        mediaQueryAdapter = MediaQueryAdapter(
+            this@MainActivity,
+            mutableListOf(MediaQueryType.AUDIO, MediaQueryType.VIDEO, MediaQueryType.IMAGE)
+        )
+        rootView.rvQueryType.apply {
+            layoutManager = LinearLayoutManager(context)
+            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
+            adapter = mediaQueryAdapter
+        }
     }
 
-    override fun onItemClick(data: String) {
-        rootView.tvMain.text = data
-        volumeName = data
-        checkReadExternalPermission()
+    override fun onItemClick(data: Any) {
+        when {
+            data is String -> {
+                rootView.tvMain.text = data
+                volumeName = data
+                checkReadExternalPermission()
+            }
+            data is MediaQueryType -> {
+                queryType = data
+            }
+        }
+    }
+
+    private fun queryImage() {
+        volumeName?.let { volumeName ->
+            val volumeAudioUri: Uri = MediaStore.Images.Media.getContentUri(volumeName)
+            val projection = arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.TITLE)
+
+            val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, null, null)
+
+            val audioList = mutableListOf<String>()
+            cursor?.use {
+                rootView.tvInfo.text = cursor.count.toString()
+                if (cursor.count <= 0) return
+                it.moveToFirst()
+                do {
+                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE))
+                    audioList.add(title)
+                } while (it.moveToNext())
+            }
+            mediaListAdapter.updateDataChanged(audioList)
+        }
     }
 
     private fun queryVideo() {
@@ -106,6 +149,20 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
                 } while (it.moveToNext())
             }
             mediaListAdapter.updateDataChanged(audioList)
+        }
+    }
+
+    private fun queryData() {
+        when(queryType) {
+            MediaQueryType.AUDIO -> {
+                queryAudio()
+            }
+            MediaQueryType.VIDEO -> {
+                queryVideo()
+            }
+            MediaQueryType.IMAGE -> {
+                queryImage()
+            }
         }
     }
 
@@ -139,7 +196,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
                     Manifest.permission.READ_MEDIA_AUDIO,
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                queryAudio()
+                queryData()
             } else {
                 requestReadExternalPermission()
             }
@@ -149,7 +206,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
                     Manifest.permission.READ_EXTERNAL_STORAGE
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                queryAudio()
+                queryData()
             } else {
                 requestReadExternalPermission()
             }
@@ -186,7 +243,7 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
         when (requestCode) {
             READ_EXTERNAL_PERMISSION_CODE -> {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    queryAudio()
+                    queryData()
                 } else {
                     //do noting
                 }

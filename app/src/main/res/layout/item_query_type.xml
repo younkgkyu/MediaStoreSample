@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="queryType"
+            type="MediaQueryType" />
+        <variable
+            name="iAdapterListener"
+            type="com.example.mediatestapp.adapter.IAdapterListener" />
+        <import type="com.example.mediatestapp.MediaQueryType"/>
+    </data>
+
+    <LinearLayout
+        android:id="@+id/llContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:background="?selectableItemBackground"
+        android:onClick="@{() -> iAdapterListener.onItemClick(queryType)}">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="@{queryType.type}"/>
+
+    </LinearLayout>
+
+</layout>
