@@ -98,11 +98,12 @@ class MainActivity : AppCompatActivity(), IAdapterListener {
     override fun onItemClick(data: Any) {
         when {
             data is String -> {
-                rootView.tvMain.text = data
+                rootView.tvMain.text = "${data}:${queryType.type}"
                 volumeName = data
                 checkReadExternalPermission()
             }
             data is MediaQueryType -> {
+                rootView.tvMain.text = "${volumeName ?: ""}:${data.type}"
                 queryType = data
             }
         }
