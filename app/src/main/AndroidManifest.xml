@@ -26,7 +26,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MediaTestApp">
         <activity
-            android:name=".MainActivity"
+            android:name=".LauncherActivity"
             android:screenOrientation="fullSensor"
             android:exported="true">
             <intent-filter>
@@ -34,6 +34,14 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".MediaTestActivity"
+            android:screenOrientation="fullSensor">
+        </activity>
+        <activity
+            android:name=".AudioTestActivity"
+            android:screenOrientation="fullSensor">
         </activity>
     </application>
 
