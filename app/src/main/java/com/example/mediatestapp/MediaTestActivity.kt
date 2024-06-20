@@ -39,11 +39,12 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
             rootView.tvInfo.text = uri.toString()
         }
     }
-    private var volumeName: String? = null
+    private var volumeName = "external_primary"
     private var queryType = MediaQueryType.AUDIO
 
     companion object {
-        private const val READ_EXTERNAL_PERMISSION_CODE = 1000;
+        private const val READ_EXTERNAL_PERMISSION_CODE = 1000
+        private val LOG_TAG = MediaTestActivity::class.java.simpleName
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,13 +103,14 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
     }
 
     override fun onItemClick(data: Any) {
-        when {
-            data is String -> {
+        when (data) {
+            is String -> {
                 rootView.tvMain.text = "${data}:${queryType.type}"
                 volumeName = data
                 checkReadExternalPermission()
             }
-            data is MediaQueryType -> {
+
+            is MediaQueryType -> {
                 rootView.tvMain.text = "${volumeName ?: ""}:${data.type}"
                 queryType = data
                 volumeName?.let {
@@ -124,22 +126,25 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
             val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
 
             val selectionBundle = bundleOf(
-                ContentResolver.QUERY_ARG_OFFSET to 0,
-                ContentResolver.QUERY_ARG_LIMIT to 1000,
+//                ContentResolver.QUERY_ARG_OFFSET to 0,
+//                ContentResolver.QUERY_ARG_LIMIT to 1000,
                 ContentResolver.QUERY_ARG_SORT_COLUMNS to arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED),
                 ContentResolver.QUERY_ARG_SORT_DIRECTION to ContentResolver.QUERY_SORT_DIRECTION_DESCENDING,
                 ContentResolver.QUERY_ARG_SQL_SELECTION to "${MediaStore.Files.FileColumns.MEDIA_TYPE}=?",
-                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to mutableListOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString()).toTypedArray()
+                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE.toString())
             )
 
-            Log.d("MediaTest", "uri : $volumeAudioUri")
+            Log.d(LOG_TAG, "uri : $volumeAudioUri")
 
             val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, selectionBundle, null)
 
             val audioList = mutableListOf<String>()
             cursor?.use {
                 rootView.tvInfo.text = cursor.count.toString()
-                if (cursor.count <= 0) return
+                if (cursor.count <= 0) {
+                    mediaListAdapter.updateDataChanged(audioList)
+                    return
+                }
                 it.moveToFirst()
                 do {
                     val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
@@ -157,22 +162,25 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
             val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
 
             val selectionBundle = bundleOf(
-                ContentResolver.QUERY_ARG_OFFSET to 0,
-                ContentResolver.QUERY_ARG_LIMIT to 1000,
+//                ContentResolver.QUERY_ARG_OFFSET to 0,
+//                ContentResolver.QUERY_ARG_LIMIT to 1000,
                 ContentResolver.QUERY_ARG_SORT_COLUMNS to arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED),
                 ContentResolver.QUERY_ARG_SORT_DIRECTION to ContentResolver.QUERY_SORT_DIRECTION_DESCENDING,
                 ContentResolver.QUERY_ARG_SQL_SELECTION to "${MediaStore.Files.FileColumns.MEDIA_TYPE}=?",
-                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to mutableListOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString()).toTypedArray()
+                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO.toString())
             )
 
-            Log.d("MediaTest", "uri : $volumeAudioUri")
+            Log.d(LOG_TAG, "uri : $volumeAudioUri")
 
             val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, selectionBundle, null)
 
             val audioList = mutableListOf<String>()
             cursor?.use {
                 rootView.tvInfo.text = cursor.count.toString()
-                if (cursor.count <= 0) return
+                if (cursor.count <= 0) {
+                    mediaListAdapter.updateDataChanged(audioList)
+                    return
+                }
                 it.moveToFirst()
                 do {
                     val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
@@ -189,29 +197,68 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
             val volumeAudioUri: Uri = MediaStore.Files.getContentUri(volumeName)
             val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
 
-            val selectionBundle = bundleOf(
-                ContentResolver.QUERY_ARG_OFFSET to 0,
-                ContentResolver.QUERY_ARG_LIMIT to 1000,
-                ContentResolver.QUERY_ARG_SORT_COLUMNS to arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED),
-                ContentResolver.QUERY_ARG_SORT_DIRECTION to ContentResolver.QUERY_SORT_DIRECTION_DESCENDING,
-                ContentResolver.QUERY_ARG_SQL_SELECTION to "${MediaStore.Files.FileColumns.MEDIA_TYPE}=?",
-                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to mutableListOf(MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString()).toTypedArray()
-            )
+//            val selectionBundle = bundleOf(
+//                ContentResolver.QUERY_ARG_OFFSET to 0,
+//                ContentResolver.QUERY_ARG_LIMIT to 1000,
+//                ContentResolver.QUERY_ARG_SORT_COLUMNS to arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED),
+//                ContentResolver.QUERY_ARG_SORT_DIRECTION to ContentResolver.QUERY_SORT_DIRECTION_DESCENDING,
+//                ContentResolver.QUERY_ARG_SQL_SELECTION to "${MediaStore.Files.FileColumns.MEDIA_TYPE}=?",
+//                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString())
+//            )
 
-            Log.d("MediaTest", "uri : $volumeAudioUri")
+            Log.d(LOG_TAG, "uri : $volumeAudioUri")
 
             val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, /*selectionBundle*/null, null)
 
             val audioList = mutableListOf<String>()
             cursor?.use {
                 rootView.tvInfo.text = cursor.count.toString()
-                if (cursor.count <= 0) return
+                if (cursor.count <= 0) {
+                    mediaListAdapter.updateDataChanged(audioList)
+                    return
+                }
                 it.moveToFirst()
                 do {
                     val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID))
                     val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.TITLE))
                     val mimeType = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE))
                     audioList.add("${title}:${mimeType}")
+                } while (it.moveToNext())
+            }
+            mediaListAdapter.updateDataChanged(audioList)
+        }
+    }
+
+    private fun queryAudio() {
+        volumeName?.let { volumeName ->
+            val volumeAudioUri: Uri = MediaStore.Files.getContentUri(volumeName)
+            val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
+
+            val selectionBundle = bundleOf(
+//                ContentResolver.QUERY_ARG_OFFSET to 0,
+//                ContentResolver.QUERY_ARG_LIMIT to 1000,
+                ContentResolver.QUERY_ARG_SORT_COLUMNS to arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED),
+                ContentResolver.QUERY_ARG_SORT_DIRECTION to ContentResolver.QUERY_SORT_DIRECTION_DESCENDING,
+                ContentResolver.QUERY_ARG_SQL_SELECTION to "${MediaStore.Files.FileColumns.MEDIA_TYPE}=?",
+                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to arrayOf(MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString())
+            )
+
+            Log.d(LOG_TAG, "uri : $volumeAudioUri")
+
+            val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, selectionBundle, null)
+
+            val audioList = mutableListOf<String>()
+            cursor?.use {
+                rootView.tvInfo.text = cursor.count.toString()
+                if (cursor.count <= 0) {
+                    mediaListAdapter.updateDataChanged(audioList)
+                    return
+                }
+                it.moveToFirst()
+                do {
+                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE))
+                    audioList.add(title)
                 } while (it.moveToNext())
             }
             mediaListAdapter.updateDataChanged(audioList)
@@ -235,45 +282,20 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
         }
     }
 
-    private fun queryAudio() {
-        volumeName?.let { volumeName ->
-            val volumeAudioUri: Uri = MediaStore.Files.getContentUri(volumeName)
-            val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
-
-            val selectionBundle = bundleOf(
-                ContentResolver.QUERY_ARG_OFFSET to 0,
-                ContentResolver.QUERY_ARG_LIMIT to 1000,
-                ContentResolver.QUERY_ARG_SORT_COLUMNS to arrayOf(MediaStore.Files.FileColumns.DATE_MODIFIED),
-                ContentResolver.QUERY_ARG_SORT_DIRECTION to ContentResolver.QUERY_SORT_DIRECTION_DESCENDING,
-                ContentResolver.QUERY_ARG_SQL_SELECTION to "${MediaStore.Files.FileColumns.MEDIA_TYPE}=?",
-                ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS to mutableListOf(MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO.toString()).toTypedArray()
-            )
-
-            Log.d("MediaTest", "uri : $volumeAudioUri")
-
-            val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, selectionBundle, null)
-
-            val audioList = mutableListOf<String>()
-            cursor?.use {
-                rootView.tvInfo.text = cursor.count.toString()
-                if (cursor.count <= 0) return
-                it.moveToFirst()
-                do {
-                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
-                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE))
-                    audioList.add(title)
-                } while (it.moveToNext())
-            }
-            mediaListAdapter.updateDataChanged(audioList)
-        }
-    }
-
     // 1. Camera 권한 확인
     private fun checkReadExternalPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     this,
                     Manifest.permission.READ_MEDIA_AUDIO,
+                ) == PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                ) == PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_IMAGES,
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 queryData()
