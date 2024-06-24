@@ -2,6 +2,7 @@ package com.example.mediatestapp
 
 import android.Manifest
 import android.content.ContentResolver
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.ContentObserver
 import android.database.Cursor
@@ -25,6 +26,8 @@ import com.example.mediatestapp.adapter.MediaQueryAdapter
 import com.example.mediatestapp.adapter.MediaVolumeAdapter
 import com.example.mediatestapp.databinding.ActivityMediaTestBinding
 import com.example.mediatestapp.listener.ICustomOnClickListener
+import com.example.mediatestapp.receiver.MediaScannerActions
+import com.example.mediatestapp.receiver.MediaScannerReceiver
 
 
 class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickListener {
@@ -42,6 +45,8 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
     private var volumeName = "external_primary"
     private var queryType = MediaQueryType.AUDIO
 
+    private var mediaScannerReceiver: MediaScannerReceiver? = null
+
     companion object {
         private const val READ_EXTERNAL_PERMISSION_CODE = 1000
         private val LOG_TAG = MediaTestActivity::class.java.simpleName
@@ -53,11 +58,24 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
 
         initUI()
         loadData()
+
+        mediaScannerReceiver = MediaScannerReceiver()
+        val intentFilter = IntentFilter()
+        MediaScannerActions.actions.forEach {
+            intentFilter.addAction(it)
+        }
+        registerReceiver(mediaScannerReceiver, intentFilter)
+        Log.i(LOG_TAG, "registerReceiver")
     }
 
     override fun onDestroy() {
         super.onDestroy()
         applicationContext.contentResolver.unregisterContentObserver(mediaContentObserver)
+        mediaScannerReceiver?.let {
+            unregisterReceiver(it)
+            mediaScannerReceiver = null
+            Log.i(LOG_TAG, "unregisterReceiver")
+        }
     }
 
     private fun loadData() {
@@ -111,17 +129,15 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
             }
 
             is MediaQueryType -> {
-                rootView.tvMain.text = "${volumeName ?: ""}:${data.type}"
+                rootView.tvMain.text = "${volumeName}:${data.type}"
                 queryType = data
-                volumeName?.let {
-                    checkReadExternalPermission()
-                }
+                checkReadExternalPermission()
             }
         }
     }
 
     private fun queryImage() {
-        volumeName?.let { volumeName ->
+        volumeName.let { volumeName ->
             val volumeAudioUri: Uri = MediaStore.Files.getContentUri(volumeName)
             val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
 
@@ -138,26 +154,27 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
 
             val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, selectionBundle, null)
 
-            val audioList = mutableListOf<String>()
+            val imageList = mutableListOf<String>()
             cursor?.use {
                 rootView.tvInfo.text = cursor.count.toString()
                 if (cursor.count <= 0) {
-                    mediaListAdapter.updateDataChanged(audioList)
+                    mediaListAdapter.updateDataChanged(imageList)
                     return
                 }
                 it.moveToFirst()
                 do {
-                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
-                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE))
-                    audioList.add(title)
+                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID))
+                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.TITLE))
+                    val mediaType = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE))
+                    imageList.add("${id}:${title}:${mediaType}")
                 } while (it.moveToNext())
             }
-            mediaListAdapter.updateDataChanged(audioList)
+            mediaListAdapter.updateDataChanged(imageList)
         }
     }
 
     private fun queryVideo() {
-        volumeName?.let { volumeName ->
+        volumeName.let { volumeName ->
             val volumeAudioUri: Uri = MediaStore.Files.getContentUri(volumeName)
             val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
 
@@ -174,26 +191,27 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
 
             val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, selectionBundle, null)
 
-            val audioList = mutableListOf<String>()
+            val videoList = mutableListOf<String>()
             cursor?.use {
                 rootView.tvInfo.text = cursor.count.toString()
                 if (cursor.count <= 0) {
-                    mediaListAdapter.updateDataChanged(audioList)
+                    mediaListAdapter.updateDataChanged(videoList)
                     return
                 }
                 it.moveToFirst()
                 do {
-                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
-                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE))
-                    audioList.add(title)
+                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID))
+                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.TITLE))
+                    val mediaType = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE))
+                    videoList.add("${id}:${title}:${mediaType}")
                 } while (it.moveToNext())
             }
-            mediaListAdapter.updateDataChanged(audioList)
+            mediaListAdapter.updateDataChanged(videoList)
         }
     }
 
     private fun queryFile() {
-        volumeName?.let { volumeName ->
+        volumeName.let { volumeName ->
             val volumeAudioUri: Uri = MediaStore.Files.getContentUri(volumeName)
             val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
 
@@ -210,27 +228,27 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
 
             val cursor: Cursor? = contentResolver.query(volumeAudioUri, projection, /*selectionBundle*/null, null)
 
-            val audioList = mutableListOf<String>()
+            val fileList = mutableListOf<String>()
             cursor?.use {
                 rootView.tvInfo.text = cursor.count.toString()
                 if (cursor.count <= 0) {
-                    mediaListAdapter.updateDataChanged(audioList)
+                    mediaListAdapter.updateDataChanged(fileList)
                     return
                 }
                 it.moveToFirst()
                 do {
                     val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID))
                     val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.TITLE))
-                    val mimeType = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE))
-                    audioList.add("${title}:${mimeType}")
+                    val mediaType = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE))
+                    fileList.add("${id}:${title}:${mediaType}")
                 } while (it.moveToNext())
             }
-            mediaListAdapter.updateDataChanged(audioList)
+            mediaListAdapter.updateDataChanged(fileList)
         }
     }
 
     private fun queryAudio() {
-        volumeName?.let { volumeName ->
+        volumeName.let { volumeName ->
             val volumeAudioUri: Uri = MediaStore.Files.getContentUri(volumeName)
             val projection = arrayOf(MediaStore.Files.FileColumns._ID, MediaStore.Files.FileColumns.TITLE, MediaStore.Files.FileColumns.MEDIA_TYPE)
 
@@ -256,9 +274,10 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
                 }
                 it.moveToFirst()
                 do {
-                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
-                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE))
-                    audioList.add(title)
+                    val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID))
+                    val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.TITLE))
+                    val mediaType = it.getString(it.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MEDIA_TYPE))
+                    audioList.add("${id}:${title}:${mediaType}")
                 } while (it.moveToNext())
             }
             mediaListAdapter.updateDataChanged(audioList)
