@@ -61,6 +61,7 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
 
         mediaScannerReceiver = MediaScannerReceiver()
         val intentFilter = IntentFilter()
+        intentFilter.addDataScheme("file")
         MediaScannerActions.actions.forEach {
             intentFilter.addAction(it)
         }

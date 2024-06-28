@@ -43,6 +43,21 @@
             android:name=".AudioTestActivity"
             android:screenOrientation="fullSensor">
         </activity>
+<!--        <receiver android:name=".receiver.MediaScannerReceiver"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MEDIA_MOUNTED" />-->
+<!--                <action android:name="android.intent.action.MEDIA_REMOVED" />-->
+<!--                <action android:name="android.intent.action.MEDIA_CHECKING" />-->
+<!--                <action android:name="android.intent.action.MEDIA_EJECT" />-->
+<!--                <action android:name="android.intent.action.MEDIA_UNMOUNTABLE" />-->
+<!--                <action android:name="android.intent.action.MEDIA_UNMOUNTED" />-->
+<!--                <action android:name="android.intent.action.MEDIA_BAD_REMOVAL" />-->
+<!--                <action android:name="android.intent.action.MEDIA_SCANNER_STARTED" />-->
+<!--                <action android:name="android.intent.action.MEDIA_SCANNER_FINISHED" />-->
+<!--                <data android:scheme="file" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
     </application>
 
 </manifest>
