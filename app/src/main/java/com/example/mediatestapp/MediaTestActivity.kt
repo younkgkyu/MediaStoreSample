@@ -317,7 +317,7 @@ class MediaTestActivity : AppCompatActivity(), IAdapterListener, ICustomOnClickL
 
                 //Builds the content uri here
                 val uri = ContentUris.withAppendedId(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    volumeAudioUri,
                     id
                 )
                 try {
