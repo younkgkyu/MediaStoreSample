@@ -6,6 +6,12 @@
         <variable
             name="title"
             type="String" />
+        <variable
+            name="id"
+            type="Long" />
+        <variable
+            name="iAdapterListener"
+            type="com.example.mediatestapp.adapter.IAdapterListener" />
     </data>
 
     <LinearLayout
@@ -15,7 +21,8 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:gravity="center_vertical"
-        android:background="?selectableItemBackground">
+        android:background="?selectableItemBackground"
+        android:onClick="@{() -> iAdapterListener.onItemClick(id)}">
 
         <TextView
             android:layout_width="wrap_content"

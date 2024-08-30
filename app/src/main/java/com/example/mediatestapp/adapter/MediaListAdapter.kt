@@ -8,11 +8,19 @@ import com.example.mediatestapp.R
 import com.example.mediatestapp.databinding.ItemMediaBinding
 
 class MediaListAdapter(
-    private var dataList: MutableList<String>
+    private var dataList: List<String>,
+    private val iAdapterListener: IAdapterListener,
+    private var idList: List<Long> = listOf()
 ) : RecyclerView.Adapter<MediaListViewHolder>() {
 
-    fun updateDataChanged(dataList: MutableList<String>) {
+    fun updateDataChanged(dataList: List<String>) {
         this.dataList = dataList
+        notifyDataSetChanged()
+    }
+
+    fun updateDataChanged(dataList: List<String>, idList: List<Long>) {
+        this.dataList = dataList
+        this.idList = idList
         notifyDataSetChanged()
     }
 
@@ -31,7 +39,7 @@ class MediaListAdapter(
     }
 
     override fun onBindViewHolder(holder: MediaListViewHolder, position: Int) {
-        holder.bind(dataList[position])
+        holder.bind(dataList[position], iAdapterListener, idList[position])
     }
 
 }

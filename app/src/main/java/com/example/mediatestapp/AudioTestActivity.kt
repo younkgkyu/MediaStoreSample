@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.example.mediatestapp.databinding.ActivityAudioTestBinding
 import com.example.mediatestapp.listener.ICustomOnClickListener
+import mobis.audio.OemAudioManager
 
 
 class AudioTestActivity : AppCompatActivity(), ICustomOnClickListener {
@@ -21,6 +22,11 @@ class AudioTestActivity : AppCompatActivity(), ICustomOnClickListener {
         rootView = DataBindingUtil.setContentView(this, R.layout.activity_audio_test)
 
         initUI()
+        initReceiver()
+    }
+
+    private fun initReceiver() {
+        val oemAudioManager = OemAudioManager(applicationContext)
     }
 
     private fun initUI() {
